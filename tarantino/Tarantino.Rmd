@@ -1,0 +1,84 @@
+---
+title: "Tarantino Movies: Motherfucking Violence"
+output: html_notebook
+---
+
+
+I am looking at the curse words in Quinten Tarentino's movies. The dataset is from Fivethrityeight's github page(https://github.com/fivethirtyeight/data). The data set includes four variables: movie, type, word, minutes. All are self explanitory except for "type." Type deliniates between swear word or death. If type is "death," the word variable is *NA.* 
+
+```{r}
+str(tarantino)
+```
+
+This is a lsit of all the swear words used in Tarantino Movies. 
+
+```{r}
+unique(tarantino$word)
+```
+
+ Notice how "fuck," "fucked," "fucking," etc.. are all considered different. Because of this I group the words. The groups are "Fucks," "Shits," "Racial Slur," "Gay Slur," "Female Slur," "Male Genitalia," and "PG-13."
+ 
+ These groups should be self explanitory. I should note, I removed the *NAs* that coresponded to deaths.
+ 
+Here's a quick look at the data:
+```{r}
+head(curses,10)
+```
+
+Now let's see which Movies have the most curse words
+```{r}
+totalmovie
+```
+
+Interestingly, There is quite a spread for the number of curse words in each Tarantino movie. Of the seven movies Tarantino has directed, over 75% of all the cursing can be found in just three of his movies: Pulp Fiction, Reservoir Dogs, and Jackie Brown. And four mvoes make up almost 90% of all the cursing.
+
+A quick view of which words are used:
+```{r}
+totalcurses
+```
+
+Tarantino likes to have his actors say some form of the word "fuck." Almost half of all curse words said in Taratino films are a varaint on the word fuck. Not a ton of "Gay Slurs."
+
+The following graph shows us the distrubtion of the curse words for each movie. Nothing too surprising. "fucks" make up most of the words used in most of the movies. The outlier is Djano Unchained. It uses far more "Racial Slurs"" as a percentage of its total curse words than any other movie. However Django Unchained is a movie about slavery, so this outcome is expected.
+```{r}
+DistributionChart
+```
+
+Also noticable is that the Kill Bill movies have a higher percentage of "Female Slurs." this can be explained by the fact that the protagonist is female. So again this inconsistancy has an explanation.
+
+Here is a cahrt that show's tarantino's movies sorted by the year they came out.
+```{r}
+moviesOverTime
+```
+
+
+Interestingly, over time it appears that tarantino is using fewer "Fucks" and "Shits." While his use of "PG-13" words has increased over that time. This probably due to Tarantino's increase in popularity. He is under pressure to produce movies that would appeal to a large population. Furthermore, overall cursing in his movies has also decreased. 
+
+```{r}
+totalmovieyear
+```
+
+As you can see overall cursing has also decreased with the exception of Django Unchanged. This can be explained by the fact that good portion of the curse words are "Racial Slurs" and Django is a somewhat a period piece.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

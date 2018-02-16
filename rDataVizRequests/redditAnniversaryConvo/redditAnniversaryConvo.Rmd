@@ -1,0 +1,193 @@
+---
+title: "r/DataVizRequests Conversation Data by not_yet_finished"
+author: "Jon Elordi"
+date: "February 15, 2018"
+output: html_document
+---
+I was on r/DataVizRequests looking for any interesting data. I came across *not_yet_finished* request to visualize the data collected from one year of conversations. *not_yet_finished* provided the data which was in a Google sheets link. Here are the libraries I loaded to do work on this quick project.
+
+```{r setup, tidy = TRUE, message = FALSE}
+#Import Data Set
+origin <- read.csv("~/Data Projects/redditAnniversaryConvo/Anniversary Data - Sheet1.csv", stringsAsFactors=FALSE)
+
+#Load The Libraries
+library(dplyr)
+library(ggplot2)
+library(tibble)
+library(lubridate)
+library(tidyr)
+```
+
+
+The data needed some work to make it usable. I created two new "Start" and "End" variables that were a combination of the original "Date"" with "Time.Start" and "Time.End". I then dropped the old "Time.Start" and "Time.End" columns. I then proceeded to make the "Weekday" variable a factor, since the days in a week are ordered.
+
+```{r}
+#
+#Combine date column with begining time and end time to get exact dates
+#
+origin$start <- paste(origin$Date, " ", origin$Time.Start)
+origin$start <- as.POSIXct(origin$start, tz = "EST",  "%m/%d/%Y %I:%M %p")
+
+origin$end <- paste(origin$Date, " ", origin$Time.End)
+origin$end <- as.POSIXct(origin$end, tz = "EST",  "%m/%d/%Y %I:%M %p")
+
+#
+#Clean up data set b/c there are duplicate rows
+#Dropped duration in time. As it is already there in minutes. Factored the Weekdays
+#
+main <- origin[,c(5,7:11)]
+main$Weekday <- factor(main$Weekday, levels = c("Monday", "Tuesday","Wednesday", "Thursday", "Friday", "Saturday", "Sunday"), ordered = T)
+```
+
+I did a quick check to see if all was good. I realized I wanted to make a few more changes to make my life a little easier.
+```{r}
+#
+#Checking to see all is good
+#
+str(main)
+
+colnames(main)[1] <- "Duration"
+colnames(main)[5:6] <- c("Start", "End")
+
+main <- main[,c(5,6,1,2,3,4)]
+
+main$Notes[main$Notes == ""] <- "Normal"
+main$Notes[main$Notes == "TOGETHER"] <- "Together"
+
+
+
+#These are the negative values if a call started before midnight but ended the next day
+#main %>% mutate(dur = End - Start) %>% filter(dur < 0)
+```
+
+I wanted to rename a few of the columns just to keep the naming conventions consistent: capital first level + one word. Then I reordered the columns so that Start and End were the first two variables in the data frame. There is also a "Notes" column that shows some unique circumstances. However, during normal/ordinary times the rows are blank. I filled the blanks with "Normal".
+
+Something interesting and potentially dumb I did with this data set was When I created the "End" variable I combined the "Date" variable with the "Time.End" variable. The problem is that "Date" is the date that the conversation started. So if the conversation started late at night and finished the next day, the date portion would be from the previous day. As you can see from the last calculation this can lead to some negative values if you do some manipulations. 
+
+I could have fixed this by finding the negative values and then just +1 day to that row. I didn't do this mostly because I didn't need to. *not_yet_finished* had provided the duration in minutes, so it wasn't necessary for me to work this issue out. 
+
+The data is workable let's look at some of the interesting numbers and some of the graphs I made.
+
+## Fun Facts
+
+Fun Fact | Value
+--------- | ------
+Mean Conversation Length | 90.18 Minutes
+Total Time Talking (min) | 46986 Minutes
+Total Time Talking (hours) | 783.1 Hours
+Total Time Talking (days) | 32.63 Days
+Longest Conversation | 628 Minutes on April 11th, 2017
+Total Number of Conversations | 521
+
+
+
+
+## Graphs
+
+
+#### The Duration of Conversations over Time 
+
+The first graph I wanted to look at was to take a look at the data over time. The start time is on the X-axis and on the Y-axis is the duration. I was curious if there were any major trends over time.
+
+```{r}
+#x = date, y = duration, fill = Notes
+main %>% ggplot(aes(Start, Duration)) + 
+          geom_point(aes(color = Notes)) + 
+          xlab("Date")
+```
+
+July was full of shorter conversations, but overall there does not appear to be any larger trends. In my next graph I wanted to see if there were any trends with their mode of communication.
+
+#### The Duration of Conversations Over Time Colored by Type of Communication
+
+```{r}
+#x = date, y = Duration, fill = Type
+main %>% ggplot(aes(Start, Duration)) + 
+  geom_point(aes(color = Type)) + 
+          xlab("Date")
+```
+
+This graph is interesting because sometime in September 2017 they switched away from using Face time. That was until January 2018 when it appears to have gone back. Did somebody's phone break?
+
+####Distribution of Duration
+```{r}
+#histogram of distributions
+main %>% ggplot(aes(Duration)) + 
+          geom_histogram(aes(fill = Type), binwidth = 30) + 
+          ylab("Count")
+```
+
+I was curious to see how the distribution of the duration of their calls looked. The mean Duration is 90.18 minutes. The max is 628 Minutes or 10.46 Hours. Did they both fall asleep on that call???
+
+####Weekday Distribution
+```{r}
+#weekday distribution
+main %>% count(Weekday) %>%
+          ggplot(aes(Weekday, n)) + 
+          geom_col(aes(fill = Weekday)) + 
+          ylab("Count of Conversations")
+```
+
+I wondered if the weekends had more conversations than the week days. To some extent they do as Wednesday and Thursday are the two lowest. Sunday and Monday seem to be the days these two conversed most often.
+
+####Weekday Violin Graph Duration
+```{r}
+#Violin Plot by weekday
+main %>% ggplot(aes(x = Weekday)) + 
+          geom_violin(aes(y = Duration)) + 
+          geom_jitter(aes(y=Duration, color = Weekday))
+```
+
+This is my favorite graph. I like it because it shows that even though the bulk of calls happened on either Sunday or Monday, some of the longest were on Tuesday and Wednesday. Also, Monday had a lot of calls, but the longest calls are capped is at 300 minutes: 5 Hours. There are three conversations that end at 5 hours almost exactly, that can't be coincidence.
+
+####Hour in the Day Distribution
+
+
+```{r}
+#I want to see in what hours calls occurred the most. So I'm extracting the hour from the start time
+
+#hourly distribution
+main %>% mutate(hour = hour(Start)) %>%
+         count(hour) %>%
+         ggplot(aes(hour, n)) + 
+         geom_col()
+```
+
+Most of the calls happened when you expect they would. After work and not in the middle of the night. A few did occur between 5-7AM. Some sort of wake call? The big value is the 6PM hour. It's very likely that was a scheduled time for a call.
+
+####Heat Map of Hours in Day and Weekday
+```{r}
+#Heat map. x = hour, y =weekday, y = frequency
+main %>% mutate(Hour = hour(Start)) %>%
+         select(Duration, Type, Weekday, Notes, Hour) %>%
+         group_by(Weekday) %>%
+         count(Hour) %>%
+         ggplot(aes(Hour, Weekday)) + 
+          geom_tile(aes(fill = n)) + 
+          scale_fill_gradient(low = "violetred", high = "darkblue")+ 
+          guides(fill=guide_legend(title="Count of \nConversations")) 
+```
+
+The heat map is as expected. Most of the calls occurring after work hours and not during hours when someone would be sleeping. The Thursday at 6PM tile is a bit of a surprise. The most calls started at that day and time: 15.
+
+####Running Totals
+
+```{r}
+#Cumsum of time spent on phone by type
+#running totals
+main %>% spread(Type,Duration, fill = 0) %>%
+         mutate(Ccumsum = cumsum(C), 
+                FTcumsum = cumsum(FT), 
+                Totalcumsum = Ccumsum + FTcumsum) %>%
+         ggplot(aes(x = Start)) + 
+          geom_line(aes(y = FTcumsum, color = "FT Running Total"), size = 1) +
+          geom_line(aes(y = Ccumsum, color = "C Running Total"), size = 1) + 
+          geom_line(aes(y = Totalcumsum, color = "Total"), size = 1) + 
+          ylab("Running Totals") + 
+          xlab("Date") +
+          scale_colour_manual("", breaks = c("C Running Total", "FT Running Total", "Total"),
+                              values = c("red", "blue", "purple"))
+```
+
+this graph just further illustrates that from September 2017 to January 2018. By the end of it they had spoken for a total of 46986 Minutes or 32 Days. Roughly a Months worth conversations in the past year.
+

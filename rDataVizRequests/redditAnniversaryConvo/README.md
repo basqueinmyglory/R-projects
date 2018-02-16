@@ -1,0 +1,1 @@
+I was on r/DataVizRequests looking for any interesting data. I came across not_yet_finished request to visualize the data collected from one year of conversations(https://www.reddit.com/r/DataVizRequests/comments/7xjqrs/request_i_would_like_someone_to_visualize_a_years/). not_yet_finished provided the data which was in a Google sheets link.

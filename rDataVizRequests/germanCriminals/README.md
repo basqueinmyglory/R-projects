@@ -1,0 +1,1 @@
+I was on the subreddit r/DataVizRequests and came across this data set(https://www.reddit.com/r/DataVizRequests/comments/7x0ady/request_help_me_visualise_this_ww2_german/) by u/Djangoinspired. It’s a CSV file with with observations about crimes committed by Germans during WWII. I decided to take a look and made several quick histograms.
